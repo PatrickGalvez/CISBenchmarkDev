@@ -6,6 +6,7 @@ try
 {   
     ##########CHANGE CSV FILE PATH HERE
     $CISobjects = Import-Csv "..\report\ResourcesInDesiredState.csv"
+    #$CISobjects = Import-Csv "..\report\ResourcesNotInDesiredState.csv"
     # "C:\Users\VC763HM\OneDrive - EY\Desktop\Initiatives\PH Automation of CIS Benchmark Report\ResourcesInDesiredState.csv"  
    
     # Array declaration
