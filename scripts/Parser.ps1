@@ -2,11 +2,27 @@
 #[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 
 #Install-Module ImportExcel
 
+# Declare template path here
+$dirPath = Get-Location
+$xlPath = Split-Path -Path $dirPath -Parent
+    
+Add-Type -Path "$xlPath\dll\itextsharp.dll"
+Import-Module -Name "$dirPath\PDFParser_New.psm1"
+$file = "$xlPath\report\CISBenchmark.pdf"
+#$pdf = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList "$xlPath\report\CISBenchmark.pdf"
+$pdf = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList "$xlPath\report\CIS_Microsoft_Windows_Server_2016_RTM_(Release_1607)_Benchmark_v1.3.0.pdf"
+$pdfMAX = $pdf.NumberOfPages
+$LogPath = "$xlPath\logs"
+
+$xlTemplate = "\template\template.xlsx"
+$xlOutput = "\output\test-output.xlsx"
+
+
 try 
 {   
     ##########CHANGE CSV FILE PATH HERE
-    $CISobjects = Import-Csv "..\report\ResourcesInDesiredState.csv"
-    #$CISobjects = Import-Csv "..\report\ResourcesNotInDesiredState.csv"
+    #$CISobjects = Import-Csv "..\report\ResourcesInDesiredState.csv"
+    $CISobjects = Import-Csv "..\report\ResourcesNotInDesiredState1.csv"
     # "C:\Users\VC763HM\OneDrive - EY\Desktop\Initiatives\PH Automation of CIS Benchmark Report\ResourcesInDesiredState.csv"  
    
     # Array declaration
@@ -53,16 +69,8 @@ try
         
     } 
  
-  # Export area; Add export function
-  # Export-Excel -Path ./testreport.xlsx
-
-    # Declare template path here
-    $dirPath = Get-Location
-    $xlPath = Split-Path -Path $dirPath -Parent
-    $xlTemplate = "\template\template.xlsx"
-    $xlOutput = "\output\test-output.xlsx"
+ # Export area; Add export function
     
-
     #Copying clean template file
     $xl = New-Object -ComObject Excel.Application
     $xl.Visible = $false
@@ -78,7 +86,7 @@ try
     for ( $row = 1; $row -le $arCISDomainName.Count; $row++ ){
     
         $xlWorkSheet = $xlWorkbook.Sheets.Item($arCompliantStatus[$row-1])
-        
+
         $CISDN_col = $xlWorkSheet.Cells.Find("CIS Domain Name")
         $Item_col = $xlWorkSheet.Cells.Find("item#")
         $CISCtrl_col = $xlWorkSheet.Cells.Find("CIS Controls")
@@ -91,11 +99,28 @@ try
         $xlWorkSheet.Cells.Item($row + 1,$CISCtrl_col.Column) = $arCISControls[$row-1]
         $xlWorkSheet.Cells.Item($row + 1,$Status_col.Column) = $arCompliantStatus[$row-1]
 
+        if ($arCompliantStatus[$row-1] -eq 'Non-Compliant'){
+
+            $RecomSett_col = $xlWorkSheet.Cells.Find("Recommended Settings")
+            $Remediation_col = $xlWorkSheet.Cells.Find("Remediation")
+            $Rationale_col = $xlWorkSheet.Cells.Find("Rationale")
+            $Impact_col = $xlWorkSheet.Cells.Find("Impact")
+
+            $nItem = $arItem[$row-1]
+            $pdf_result = Generate-Report $nItem $pdfMAX
+
+            $xlWorkSheet.Cells.Item($row + 1,$RecomSett_col.Column) = $pdf_result.Recommendation
+            $xlWorkSheet.Cells.Item($row + 1,$Remediation_col.Column) = $pdf_result.Remediation
+            $xlWorkSheet.Cells.Item($row + 1,$Rationale_col.Column) = $pdf_result.Rationale
+            $xlWorkSheet.Cells.Item($row + 1,$Impact_col.Column) = $pdf_result.Impact
+
+        }
+
     }
 
     $xlWorkbook.Close()
     $xl.Quit()
-
+    $pdf.Close()
 
 } catch [System.Net.WebException],[System.IO.IOException]  {
     Write-Host "----- Exception -----" 
@@ -107,4 +132,4 @@ try
     $reader.BaseStream.Position = 0 
     $reader.DiscardBufferedData() 
     $responseBody = $reader.ReadToEnd() 
-} 
+}
