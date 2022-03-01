@@ -143,7 +143,7 @@ function Find-PageNumber3 {
         [Parameter(Mandatory=$true)][string]$MAX
         
 	)
-    $ControlNameDuplicate = $null
+    $ControlNameDuplicate, $matchSubdomain = $null
     $ControlNameDuplicate = $ControlName | Select-String -Pattern '.*.(?=\s\(\d{1,2}\))'
         
     if ( $ControlNameDuplicate -ne $null ) {
@@ -160,7 +160,7 @@ function Find-PageNumber3 {
     Write-Host [FOR DEV] Control Name in REGEX input: $ControlName
     
     $matchedItemNo = $false
-    $text = $null, $next, $matchAppendix = $null, $matchSubdomain = $null
+    $text = $null, $next, $matchAppendix = $null, $matchSubdomain = $null, $nItem2 = $null, $nSubdomain = $null
     $TOCpage = 3
     do {
         if ($TOCpage -lt $MAX) {
@@ -169,9 +169,9 @@ function Find-PageNumber3 {
 
             #GETTING SUBDOMAIN LOGIC
             $linesForSubdomain += $text 
-            $lines = [string]::join("",($text.Split("`n`r':")))
+            $lines = [string]::join("",($text.Split("`n`r':/\%,_&""=[]+")))
            
-            Write-Output $lines > output.txt
+            Write-Output $linesForSubdomain > output.txt
             foreach ($line in $lines) {
                 $nItem2 = $line | Select-String -Pattern ($ControlName + '.*') # find the match in ToC
                 $nItem2 = $nItem2.Matches.Value
@@ -182,7 +182,7 @@ function Find-PageNumber3 {
 
                 $nSubdomain = $holderItemNo -replace '.[^\.]+$'
                 
-                $matchSubdomain = $linesForSubdomain | Select-String -Pattern ($nSubdomain + '\s[\s\w]*')
+                $matchSubdomain = $linesForSubdomain | Select-String -Pattern ('(?:\n)' + $nSubdomain + '\s[\s\w]*')
                 $matchSubdomain = $matchSubdomain.Matches.Value
                 #Write-Host $matchSubdomain
                 
@@ -193,7 +193,8 @@ function Find-PageNumber3 {
                     [int] $DetailsPageNum = $nItem2# convert string to number          
                     Write-Host Page $DetailsPageNum Item No $holderItemNo `n Subdomain ItemNo $nSubdomain
                     $DetailsPageNum++  ### var $p to be used as pagenum in loop
-                
+                    
+                    $matchSubdomain = $matchSubdomain.TrimStart("`n")
                     $matchSubdomain = $matchSubdomain.TrimStart('.1234567890 ')
                     Write-Host Sub-Domain - $matchSubdomain
                 }
@@ -209,8 +210,8 @@ function Find-PageNumber3 {
             $TOCpage++
         }else {
             $DetailsPageNum = 0
-            #return $DetailsPageNum
-            Return @{'DetailsPageNum' = $($DetailsPageNum); matchSubdomain = $($matchSubdomain)}
+            $matchSubdomain = $null
+            Return @{'DetailsPageNum' = $($DetailsPageNum); matchSubdomain = $($matchSubdomain); ItemNo = $($holderItemNo)}
         }
    }while ($matchedItemNo -ne $true)
    
@@ -218,6 +219,7 @@ function Find-PageNumber3 {
    Return @{'DetailsPageNum' = $($DetailsPageNum); matchSubdomain = $($matchSubdomain); ItemNo = $($holderItemNo)}
    $pdf.Close()
 }
+
 
 function Generate-Report
 {
