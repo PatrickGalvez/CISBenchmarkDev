@@ -65,61 +65,59 @@ function Convert-PDFtoTextForDetails {
 function Find-PageNumber {
 	param(
         [Parameter(Mandatory=$true)][string]$ItemNumber,
-        [Parameter(Mandatory=$true)][string]$MAX
+        [Parameter(Mandatory=$true)][int]$MAX
 	)
     
-    Try
-    {
-        $matchedItemNo = $false
-        $text = $null, $next, $matchAppendix = $null
-        $TOCpage = 3
-        do {
-            if ($TOCpage -lt $MAX) {
-                #Write-Host $TOCpage $MAX
-                $text = [iTextSharp.text.pdf.parser.PdfTextExtractor]::GetTextFromPage($pdf,$TOCpage)  
-                $lines = $null
-                $lines = [string]::join("",($text.Split("`r")))
-      
-                foreach ($line in $lines) {
-                    $nItem2 = $line | Select-String -Pattern ($nItem + '.*\n.*') # find the match in ToC
-                    if ($nItem2 -ne $null) {
-                        $matchedItemNo = $true
-                        $nItem2 = ($nItem2.Matches.Value).Split('.')[-1] # removing starting string and trailing dots
-                        $nItem2 = $nItem2 | Select-String -Pattern '\d{1,5}' #pagenum size
-                        [int] $DetailsPageNum = $nItem2.Matches.Value # convert string to number
-                        Write-Host Page $DetailsPageNum Item No $nItem `n
-                        $DetailsPageNum++  ### var $p to be used as pagenum in loop
-                    }
-
-                    $matchAppendix = $line | Select-String -Pattern 'Appendix:'
-                    $matchAppendix = $matchAppendix.Matches.Value
-                    if ($matchAppendix -ne $null) {
-                        $MAX = $TOCpage
-                    }
+    $matchedItemNo = $false
+    $text = $null, $next, $matchAppendix = $null
+    $TOCpage = 3
+    do {
+        if ($TOCpage -lt $MAX) {
+            $text = [iTextSharp.text.pdf.parser.PdfTextExtractor]::GetTextFromPage($pdf,$TOCpage)  
+            $lines = $null
+            $lines = [string]::join("",($text.Split("`n`r")))
+            #$nSubdomain = $nItem -replace '.[^\.]+$' 
+        
+            foreach ($line in $lines) {
+         
+                $nItem2 = $line | Select-String -Pattern ($nItem + '.*') # find the match in ToC
+                $nItem2 = $nItem2.Matches.Value
+                $matchSubdomain = $line | Select-String -Pattern ($nSubdomain + ' (.*)')
+                if ($nItem2 -ne $null) {
+                    $matchedItemNo = $true
+                    $nItem2 = $nItem2 | Select-String -Pattern '(?=\.+).(\s([0-9]+)\s)' #pagenum sizes
+                    $nItem2 = ($nItem2.Matches.Value).Trim('. ') 
+                    [int] $DetailsPageNum = $nItem2# convert string to number          
+                    Write-Host Page $DetailsPageNum Item No $nItem `n
+                    $DetailsPageNum++  ### var $p to be used as pagenum in loop
+                
+                    #$matchSubdomain = (($matchSubdomain.Matches.Value).TrimEnd('.1234567890 ')).TrimStart('.1234567890 ')
+                    #Write-Host Sub-Domain - $matchSubdomain
                 }
-                $TOCpage++
-            }else {
-                $DetailsPageNum = 0
-                return $DetailsPageNum
+                
+                $matchAppendix = $line | Select-String -Pattern 'Appendix:'
+                $matchAppendix = $matchAppendix.Matches.Value
+                Write-Host $matchAppendix
+                if ($matchAppendix -ne $null) {
+                    $MAX = $TOCpage
+                }
             }
-       }while ($matchedItemNo -ne $true)
+            $TOCpage++
+        }else {
+            $DetailsPageNum = 0
+            return $DetailsPageNum
+        }
+   }while ($matchedItemNo -ne $true)
    
-       return $DetailsPageNum
-       #$pdf.Close()
-   }
-   Catch
-   {
-        $ErrorDetails = $Error[0].Exception.Message
-        Write-Log 'Find-PageNumber' $ErrorDetails
-        #$pdf.Close()
-   }
+   return $DetailsPageNum
+   $pdf.Close()
 }
 
 function Generate-Report
 {
     param(
         [Parameter(Mandatory=$true)][string]$ItemNumber,
-        [Parameter(Mandatory=$true)][string]$MAX
+        [Parameter(Mandatory=$true)][int]$MAX
 	)
 
     Try
@@ -176,7 +174,7 @@ function Generate-Report
     Catch
     {
         $ErrorDetails = $Error[0].Exception.Message
-        Write-Log 'Generate-Report' $ErrorDetails
+        #Write-Log 'Generate-Report' $ErrorDetails
         #$pdf.Close()
     }
 }

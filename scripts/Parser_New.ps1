@@ -2,8 +2,17 @@
 #[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 
 #Install-Module ImportExcel
 
+$dirPath = Get-Location
+$xlPath = Split-Path -Path $dirPath -Parent
 
-# Variable Declaration
+Add-Type -Path "$xlPath\dll\itextsharp.dll"
+Import-Module -Name "$dirPath\PDFParser_New.psm1"
+$file = "C:\Users\RT351HD\OneDrive - EY\Desktop\CIS Initiative\CISBenchmarkDev\report\CIS_Microsoft_Windows_Server_2016_RTM_(Release_1607)_Benchmark_v1.3.0.pdf"
+$pdf = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList "C:\Users\RT351HD\OneDrive - EY\Desktop\CIS Initiative\CISBenchmarkDev\report\CIS_Microsoft_Windows_Server_2016_RTM_(Release_1607)_Benchmark_v1.3.0.pdf"
+$pdfMAX = $pdf.NumberOfPages
+$LogPath = "$xlPath\logs"
+
+<# Variable Declaration
 Add-Type -Path "C:\Users\ED898MR\OneDrive - EY\Documents\CISBenchmark\PDFParser\itextsharp.dll"
 $file = "C:\Users\ED898MR\OneDrive - EY\Documents\CISBenchmark\PDFParser\CISBenchmark.pdf"
 $pdf = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList "C:\Users\ED898MR\OneDrive - EY\Documents\CISBenchmark\PDFParser\CISBenchmark.pdf"
@@ -11,13 +20,19 @@ $pdfMAX = $pdf.NumberOfPages
 $LogPath = "C:\Users\ED898MR\OneDrive - EY\Documents\CISBenchmark\PDFParser"
 
 Import-Module -Name "C:\Users\ED898MR\OneDrive - EY\Documents\CISBenchmark\PDFParser\PDFParser_New.psm1"
+#>
 
-Generate-Report "2.2.1" $pdfMAX
-<#$test = Generate-Report $nItem $pdfMAX
+
+#Generate-Report "2.2.1" $pdfMAX
+$nItem = '18.9.10.1.1'
+$test = Generate-Report $nItem $pdfMAX
 $test.Remediation
 $test.Rationale
 $test.Recommendation
-$test.Impact#>
+$test.Impact
+
+
+<#
 
 
 try 
@@ -55,10 +70,10 @@ try
 
 
         # Control Standard / Reference Column
-        <# Commented since will not be used as of the moment
-        $ControlStandardReference = [regex]::Matches($CISDomainName, '(?<=\[)[^]]+(?=\])').Value
-        Write-Host $ControlStandardReference
-        #>
+        # Commented since will not be used as of the moment
+        #$ControlStandardReference = [regex]::Matches($CISDomainName, '(?<=\[)[^]]+(?=\])').Value
+        #Write-Host $ControlStandardReference
+        
 
         # Status
         if ( $CISobject.InDesiredState -eq 'TRUE'){
@@ -128,3 +143,4 @@ try
     $responseBody = $reader.ReadToEnd() 
 }
 
+#>
