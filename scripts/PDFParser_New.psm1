@@ -136,15 +136,15 @@ function Generate-Report
             $matchRecommendation = $matchRecommendation.Matches.Value
             Write-Host "Recommendation -" $matchRecommendation
 
-            $matchRemediation = $next | Select-String -Pattern 'Remediation: (([\s\S]*)(?=Default Value) |.+?(?=Default Value:))' 
+            $matchRemediation = $next | Select-String -Pattern 'Remediation: (([\s\S]*)(?=Impact:) |.+?(?=Impact:))' 
             $matchRemediation = ($matchRemediation.Matches.Value).Substring(13)
             Write-Host "`nRemediation -" $matchRemediation
 
-            $matchRationale = $next | Select-String -Pattern 'Rationale: (([\s\S]*)(?=Impact:) |.+?(?=Impact:))'
+            $matchRationale = $next | Select-String -Pattern 'Rationale: (([\s\S]*)(?=Audit:) |.+?(?=Audit:))'
             $matchRationale = ($matchRationale.Matches.Value).Substring(11)
             Write-Host "`nRationale -" $matchRationale
     
-            $matchImpact = $next | Select-String -Pattern 'Impact: (([\s\S]*)(?=Audit:) |.+?(?=Audit:))'
+            $matchImpact = $next | Select-String -Pattern 'Impact: (([\s\S]*)(?=Default Value:) |.+?(?=Default Value:))'
             $matchImpact = ($matchImpact.Matches.Value).Substring(8)
             Write-Host "`nImpact -" $matchImpact
 
