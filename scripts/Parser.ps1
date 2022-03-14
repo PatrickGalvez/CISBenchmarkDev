@@ -181,9 +181,7 @@ $dirPath = Get-Location
 $xlPath = Split-Path -Path $dirPath -Parent
     
 Add-Type -Path "$xlPath\dll\itextsharp.dll"
-$pdf = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList "$xlPath\report\$pdffile"
-Import-Module -Name "$dirPath\PDFParser_New.psm1"
-$pdf = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList "$xlPath\report\CIS_Microsoft_Windows_Server_2016_RTM_Release_1607_Benchmark_v1.2.0.pdf" #PDF file ref for CISBenchmark
+$pdf = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList "$xlPath\report\$pdffile" #PDF file ref for CISBenchmark
 $pdfMAX = $pdf.NumberOfPages
 $LogPath = "$xlPath\logs"
 
