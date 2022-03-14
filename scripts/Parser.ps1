@@ -218,7 +218,7 @@ try
     For ( $xlTab -eq 1; $xlTab -le 2; $xlTab++ ) {
     
         ##########CHANGE CSV FILE PATH HERE
-        if ( $xlTab -eq 1 ) {$CISobjects = Import-Csv "..\report\ResourcesInDesiredState.csv"} #CSV cleansed file name for DesiredState
+        if ( $xlTab -eq 1 ) {$CISobjects = Import-Csv "..\report\ResourcesInDesiredState1.csv"} #CSV cleansed file name for DesiredState
         if ( $xlTab -eq 2 ) {$CISobjects = Import-Csv "..\report\ResourcesNotInDesiredState1.csv"} #CSV cleansed file name for NotInDesiredState
 
         # Array declaration
