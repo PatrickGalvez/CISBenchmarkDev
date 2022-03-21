@@ -2,7 +2,12 @@
 #[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 
 #Install-Module ImportExcel
 
-param([string]$pdffile,[string]$xloutfile)
+Param
+(
+    [Parameter(Mandatory=$true)] [String] $pdffile,
+    [Parameter(Mandatory=$true)] [String] $xloutfile,
+    [Parameter(Mandatory=$true)] [String] $rawdatafile
+)
 
 ######################################################################################
 ########## FUNCTIONS FOR WRITING LOGS, GENERATE REPORT AND PDF PARSER ################
@@ -190,12 +195,25 @@ $xlOutput = "\output\$xloutfile.xlsx"
 
 try 
 {   
+    #Extract output file
+    if ( -not(Test-Path -Path "$xlPath\output\$rawdatafile" -PathType Leaf) ) {
+
+        Write-Host "`n$xlPath\output\$rawdatafile does not exist." -ForegroundColor Red
+        Exit
     
+    } else {
+
+        Write-Host "`nExtracting rawdatafile.zip to report\ folder."
+        Expand-Archive -Path "$xlPath\output\$RawDataFile" -DestinationPath "$xlPath\report\" -Force
+        Write-Host "`n$xlPath\output\$rawdatafile successfully extracted." -ForegroundColor Green
+    }
+
     #Copying clean template file
     $xl = New-Object -ComObject Excel.Application
     $xl.Visible = $false
     $xlWB = $xl.Workbooks.Open($xlPath + $xlTemplate)
 
+    #Checking if output is already exist; remove and re-upload if present
     if ( -not(Test-Path -Path $xlPath$xlOutput -PathType Leaf) ) {
 
         $xlWB.SaveAs($xlPath + $xlOutput)
@@ -218,8 +236,8 @@ try
     For ( $xlTab -eq 1; $xlTab -le 2; $xlTab++ ) {
     
         ##########CHANGE CSV FILE PATH HERE
-        if ( $xlTab -eq 1 ) {$CISobjects = Import-Csv "..\report\ResourcesInDesiredState1.csv"} #CSV cleansed file name for DesiredState
-        if ( $xlTab -eq 2 ) {$CISobjects = Import-Csv "..\report\ResourcesNotInDesiredState1.csv"} #CSV cleansed file name for NotInDesiredState
+        if ( $xlTab -eq 1 ) {$CISobjects = Import-Csv "..\report\ResourcesInDesiredState.csv"} #CSV cleansed file name for DesiredState
+        if ( $xlTab -eq 2 ) {$CISobjects = Import-Csv "..\report\ResourcesNotInDesiredState.csv"} #CSV cleansed file name for NotInDesiredState
 
         # Array declaration
         $arCISDomainName = @()
@@ -258,6 +276,7 @@ try
         
         } 
  
+        #Parsing the variable to excel outfile
         for ( $row = 1; $row -le $arCISDomainName.Count; $row++ ){
     
             $xlWorkSheet = $xlWorkbook.Sheets.Item($arCompliantStatus[$row-1])
@@ -293,6 +312,7 @@ try
 
     }
     
+    #Closing the workbook, excel and pdf
     $xlWorkbook.Close()
     $xl.Quit()
     $pdf.Close()
